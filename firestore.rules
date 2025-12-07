@@ -2,19 +2,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Public marketplace - anyone can read, authenticated users can write
-    match /artifacts/{appId}/public/data/marketplace/{listingId} {
-      allow read: if true;
-      allow create: if request.auth != null;
-      allow update, delete: if false;
-    }
-    
-    // User data - only owner can access
-    match /artifacts/{appId}/users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Deny everything else by default
+    // TEMPORARY: Allow everything for testing (30 days)
+    // Remove this block and uncomment below when ready for production
     match /{document=**} {
       allow read, write: if request.time < timestamp.date(2026, 1, 5);
     }
