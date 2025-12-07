@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nigerian Growth Platform</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .content-view { display: none; }
+        .active-view { display: block; }
+        .nav-button.active {
+            border-bottom: 3px solid #0056b3;
+            color: #0056b3;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+
+    <div id="app" class="flex flex-col min-h-screen">
+        
+        <header class="bg-white shadow-md sticky top-0 z-10">
+            <div class="max-w-7xl mx-auto p-4 sm:px-6 lg:px-8">
+                
+                <div class="flex justify-between items-center py-2">
+                    <h1 class="text-2xl font-bold text-indigo-600">Nigerian Growth Platform</h1>
+                    
+                    <div class="text-xs text-gray-500">
+                        User: <code id="user-id" class="text-sm font-medium text-gray-700">Loading...</code>
+                    </div>
+                </div>
+
+                <nav class="flex space-x-4 border-b">
+                    <button id="nav-marketplace" class="nav-button py-3 px-1 text-sm font-medium text-gray-500 hover:text-indigo-600 transition duration-150 ease-in-out active"
+                        onclick="showView('marketplace', this)">Marketplace (Property & Cars)</button>
+                    
+                    <button id="nav-flights" class="nav-button py-3 px-1 text-sm font-medium text-gray-500 hover:text-indigo-600 transition duration-150 ease-in-out"
+                        onclick="showView('flights', this)">Flights</button>
+
+                    <button id="nav-list-item" class="nav-button py-3 px-1 text-sm font-medium text-gray-500 hover:text-indigo-600 transition duration-150 ease-in-out"
+                        onclick="showView('list-item', this)">List Item</button>
+                </nav>
+
+            </div>
+        </header>
+        
+        <main class="flex-grow max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 w-full">
+            
+            <section id="marketplace" class="content-view active-view bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-semibold mb-4 text-indigo-700">Public Marketplace Listings</h2>
+                <div id="marketplace-listings" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <p class="text-gray-500 col-span-full" id="loading-listings">Loading marketplace data...</p>
+                </div>
+            </section>
+
+            <section id="flights" class="content-view bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-semibold mb-4 text-indigo-700">Flight Search & Booking</h2>
+                <p class="text-gray-600">This section will contain the flight search and booking interface. Currently under development.</p>
+            </section>
+
+            <section id="list-item" class="content-view bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-semibold mb-4 text-indigo-700">List an Item on the Marketplace</h2>
+                
+                <form id="listing-form" class="space-y-4" onsubmit="event.preventDefault(); submitListing(event);">
+                    
+                    <div>
+                        <label for="listing-title" class="block text-sm font-medium text-gray-700">Title (e.g., Toyota Camry 2018 or 3-Bed Flat, Lekki)</label>
+                        <input type="text" id="listing-title" required 
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="listing-price" class="block text-sm font-medium text-gray-700">Price (in Naira - ₦)</label>
+                        <input type="number" id="listing-price" required min="1000"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="listing-description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea id="listing-description" rows="3" required
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                    </div>
+
+                    <button type="submit" id="submit-button"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                        Submit Listing
+                    </button>
+                    <p id="auth-status-message" class="text-red-500 text-sm mt-2 hidden">You must be authenticated to submit a listing.</p>
+
+                </form>
+            </section>
+
+            <div id="message-box" class="fixed bottom-4 right-4 bg-green-500 text-white p-3 rounded-lg shadow-xl opacity-0 transition-opacity duration-300"></div>
+
+        </main>
+        
+        <footer class="bg-white border-t p-4 text-center text-gray-500 text-sm">
+            &copy; <span id="current-year"></span> Nigerian Growth Platform. All rights reserved.
+        </footer>
+
+    </div>
+
+    <script type="module">
+        const appId = 'nigerian-growth-platform';
+        const firebaseConfig = {
+            apiKey: "AIzaSyB4YefIfvEsqcRGnMhc4tV8A7V5Y-wa4p0",
+            authDomain: "nigerian-growth-platform.firebaseapp.com",
+            projectId: "nigerian-growth-platform",
+            storageBucket: "nigerian-growth-platform.firebasestorage.app",
+            messagingSenderId: "675595332832",
+            appId: "1:675595332832:web:94711baf74e6d88625b485"
+        };
+        const initialAuthToken = null;
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, addDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        let app, db, auth;
+        let isAuthReady = false;
+        let userId = '';
+        
+        const userIdDisplay = document.getElementById('user-id');
+        const messageBox = document.getElementById('message-box');
+        const authStatusMessage = document.getElementById('auth-status-message');
+        const submitButton = document.getElementById('submit-button');
+        
+        function showMessage(message, type = 'success') {
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warn: 'bg-yellow-500'
+            };
+            
+            messageBox.textContent = message;
+            messageBox.className = `fixed bottom-4 right-4 text-white p-3 rounded-lg shadow-xl opacity-0 transition-opacity duration-300 ${colors[type]}`;
+            
+            setTimeout(() => messageBox.classList.remove('opacity-0'), 10);
+            setTimeout(() => messageBox.classList.add('opacity-0'), 5000);
+        }
+
+        function startDataListener() {
+            if (!db || !isAuthReady) {
+                console.warn("Firestore not initialized or Auth not ready.");
+                return;
+            }
+
+            const collectionPath = `artifacts/${appId}/public/data/marketplace`;
+            const marketplaceRef = collection(db, collectionPath);
+            
+            console.log(`Attaching listener to: ${collectionPath}`);
+            const listingsContainer = document.getElementById('marketplace-listings');
+            const loadingIndicator = document.getElementById('loading-listings');
+
+            onSnapshot(marketplaceRef, (snapshot) => {
+                let htmlContent = '';
+                const listings = [];
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    listings.push({ id: doc.id, ...data });
+                });
+
+                if (listings.length === 0) {
+                    htmlContent = `<p class="text-gray-500 col-span-full">No listings found yet. Start by listing an item!</p>`;
+                } else {
+                    listings.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+                    listings.forEach(listing => {
+                        const itemTitle = listing.title || 'Untitled Item';
+                        const itemPrice = listing.price ? `₦${listing.price.toLocaleString('en-NG')}` : 'Price not set';
+                        const itemSeller = listing.sellerId === userId ? 'You' : `User ID: ${listing.sellerId.substring(0, 8)}...`;
+                        const itemDescription = listing.description || 'No description provided.';
+
+                        htmlContent += `
+                            <div class="bg-indigo-50 p-4 rounded-lg shadow hover:shadow-lg transition flex flex-col justify-between">
+                                <div>
+                                    <h3 class="font-bold text-xl text-indigo-700">${itemTitle}</h3>
+                                    <p class="text-3xl font-extrabold text-gray-900 mt-1">${itemPrice}</p>
+                                    <p class="text-gray-700 mt-2 text-sm line-clamp-3">${itemDescription}</p>
+                                </div>
+                                <div class="mt-4 pt-3 border-t border-indigo-200">
+                                    <p class="text-xs text-gray-500">Listed by: ${itemSeller}</p>
+                                    <p class="text-xs text-gray-400">ID: ${listing.id.substring(0, 10)}...</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                if (loadingIndicator) loadingIndicator.remove();
+                listingsContainer.innerHTML = htmlContent;
+                
+            }, (error) => {
+                console.error("Error fetching listings:", error);
+                showMessage(`Error fetching data: ${error.message}`, 'error');
+                listingsContainer.innerHTML = `<p class="text-red-500 col-span-full">Error loading listings. Check console for details.</p>`;
+            });
+        }
+
+        window.submitListing = async function(event) {
+            event.preventDefault();
+
+            if (!db || !userId || userId === 'Anonymous/Unauthenticated') {
+                showMessage("Authentication required. Please sign in to list an item.", 'error');
+                return;
+            }
+
+            const title = document.getElementById('listing-title').value.trim();
+            const price = parseFloat(document.getElementById('listing-price').value);
+            const description = document.getElementById('listing-description').value.trim();
+
+            if (!title || !price || !description) {
+                showMessage("All fields are required.", 'warn');
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+
+            const newListing = {
+                title: title,
+                price: price, 
+                description: description,
+                sellerId: userId,
+                timestamp: Date.now(), 
+            };
+
+            try {
+                const collectionPath = `artifacts/${appId}/public/data/marketplace`;
+                await addDoc(collection(db, collectionPath), newListing);
+
+                showMessage("Listing submitted successfully!", 'success');
+                document.getElementById('listing-form').reset();
+                
+            } catch (error) {
+                console.error("Error adding document:", error);
+                showMessage(`Failed to submit listing: ${error.message}`, 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit Listing';
+            }
+        }
+
+        window.showView = function(viewId, clickedButton) {
+            document.querySelectorAll('.content-view').forEach(view => {
+                view.classList.remove('active-view');
+            });
+            document.querySelectorAll('.nav-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            const targetView = document.getElementById(viewId);
+            if (targetView) {
+                targetView.classList.add('active-view');
+                if (clickedButton) {
+                    clickedButton.classList.add('active');
+                }
+            }
+            
+            if (viewId === 'list-item') {
+                if (!userId || userId === 'Anonymous/Unauthenticated') {
+                    authStatusMessage.classList.remove('hidden');
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Sign In Required';
+                } else {
+                    authStatusMessage.classList.add('hidden');
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Submit Listing';
+                }
+            }
+        }
+
+        async function initFirebase() {
+            try {
+                if (Object.keys(firebaseConfig).length === 0) {
+                    const errorMessage = "Firebase configuration missing.";
+                    console.error(errorMessage);
+                    userIdDisplay.textContent = 'Config Error';
+                    showMessage(errorMessage, 'error');
+                    return; 
+                }
+
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                await signInAnonymously(auth);
+                
+                onAuthStateChanged(auth, (user) => {
+                    isAuthReady = true; 
+                    
+                    if (user) {
+                        userId = user.uid;
+                        userIdDisplay.textContent = userId;
+                        showMessage("Authenticated. User ID: " + userId.substring(0, 12) + "...", 'success');
+                        console.log("Authentication successful. User ID:", userId);
+                    } else {
+                        userId = 'Anonymous/Unauthenticated';
+                        userIdDisplay.textContent = userId;
+                        showMessage("Signed in anonymously. Public access only.", 'warn');
+                        console.warn("Signed in anonymously.");
+                    }
+                    
+                    startDataListener();
+                    
+                    const currentViewId = document.querySelector('.active-view').id;
+                    const currentButton = document.querySelector('.nav-button.active');
+                    showView(currentViewId, currentButton);
+                });
+            } catch (error) {
+                console.error("Firebase Initialization failed:", error);
+                userIdDisplay.textContent = 'Error!';
+                showMessage(`Auth Failed: ${error.message}`, 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            showView('marketplace', document.getElementById('nav-marketplace'));
+        });
+
+    </script>
+</body>
+</html>

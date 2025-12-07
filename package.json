@@ -1,0 +1,16 @@
+{
+  "name": "nigerian-growth-platform",
+  "version": "1.0.0",
+  "description": "Marketplace for Properties & Cars in Nigeria",
+  "main": "index.js",
+  "scripts": {
+    "start": "live-server",
+    "dev": "live-server"
+  },
+  "dependencies": {
+    "firebase": "^11.6.0"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
